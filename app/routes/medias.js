@@ -114,7 +114,7 @@ router.post('/media/appendFile', function(req, res, next) {
 	logger.system.debug(req.files);
 
 	// コンテンツファイル読み込み(ファイルはbufferのまま扱う)
-	fs.readFile(__dirname + '/../' + file.path, null, function (err, data) {
+	fs.readFile(file.path, null, function (err, data) {
 		if (!err) {
 			logger.system.debug('content size:' + data.length);
 
@@ -145,8 +145,8 @@ router.post('/media/appendFile', function(req, res, next) {
 				// ブロブブロック作成
 				blobService.createBlockFromText(blockId, container, blob, body, {}, function(error)
 				{
-					logger.system.debug('createBlockFromText result...');
-					logger.system.debug(error);
+					logger.system.info('createBlockFromText result...');
+					logger.system.info(error);
 					createdBlockIds.push(blockId);
 
 					if (createdBlockIds.length == blockIdCount) {
@@ -188,8 +188,8 @@ router.post('/media/commitFile', function(req, res, next) {
 	// コミット
 	blobService.commitBlocks(container, blob, {LatestBlocks: blockList}, {}, function(error, blocklist, response)
 	{
-		logger.system.debug('commitBlocks result...');
-		logger.system.debug(error);
+		logger.system.info('commitBlocks result...');
+		logger.system.info(error);
 		logger.system.info('commitBlocks statusCode:' + response.statusCode);
 
 		if (!error && response.isSuccessful) {

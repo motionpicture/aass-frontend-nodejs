@@ -27,7 +27,7 @@ app.use(logger.express);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({dest: './uploads/'}).any()); // for parsing multipart/form-data
+app.use(multer({dest: __dirname + '/uploads/'}).any()); // for parsing multipart/form-data
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
