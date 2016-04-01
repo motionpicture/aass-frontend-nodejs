@@ -1,0 +1,10 @@
+.project
+.settings
+
+app/logs/*
+app/node_modules/*
+app/uploads/*
+mode.php
+
+!.gitignore
+!.gitkeep
