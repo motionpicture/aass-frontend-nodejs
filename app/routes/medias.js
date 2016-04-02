@@ -30,7 +30,8 @@ function generateBlockId(blockCount)
 }
 
 router.get('/medias', function(req, res, next) {
-	mediaModel.getListByEventId(req.session.user.id, function(err, rows, fields)
+	var model = new mediaModel;
+	model.getListByEventId(req.session.user.id, function(err, rows, fields)
 	{
 		logger.system.info('rows count:' + rows.length);
 		res.render('media/index', {medias: rows});
@@ -48,7 +49,8 @@ router.post('/media/create', function(req, res, next) {
 	params.id = '';
 	params.event_id = req.session.user.id;
 
-	mediaModel.insert(params, function(err, result) {
+	var model = new mediaModel;
+	model.insert(params, function(err, result) {
 		if (err) throw err;
 		logger.system.debug('insert result...');
 		logger.system.debug(result);

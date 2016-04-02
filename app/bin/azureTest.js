@@ -16,6 +16,8 @@ var blobService = azure.createBlobService(
 
 mediaService.setToken(function (err)
 {
+	if (err) throw err;
+
 	var filename = 'motionpicturetestfilename'
 
 	// アセット作成	
@@ -23,6 +25,7 @@ mediaService.setToken(function (err)
 		Name: filename
 	}, function (err, res)
 	{
+		if (err) throw err;
 		if (!err) {
 			var data = JSON.parse(res.body);
 			if (!data.error) {
@@ -54,12 +57,12 @@ mediaService.setToken(function (err)
 	
 					while (!end) {
 
-				        var readPos = blockSize * counter;
-				        var endPos = readPos + blockSize;
-				        if (endPos >= content.length) {
-				            endPos = content.length;
+						var readPos = blockSize * counter;
+						var endPos = readPos + blockSize;
+						if (endPos >= content.length) {
+							endPos = content.length;
 							end = true;
-				        }
+						}
 
 						body = content.slice(readPos, endPos);
 						console.log(body.length);

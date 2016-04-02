@@ -1,20 +1,22 @@
 var mysql = require('mysql');
+var conf = require('config');
 
-var db = mysql.createConnection({
-  host     : 'ja-cdbr-azure-east-a.cloudapp.net',
-  user     : 'bb9a17e70e5122',
-  password : '7132898f',
-  database : 'testaasAoi6PUaV0'
+console.log('creating pool...');
+var db = mysql.createPool({
+	connectionLimit: 10,
+	host           : conf.db_host,
+	user           : conf.db_username,
+	password       : conf.db_password,
+	database       : conf.db_dbname,
+	queryFormat    : function (query, values) {
+		if (!values) return query;
+		return query.replace(/\:(\w+)/g, function (txt, key) {
+			if (values.hasOwnProperty(key)) {
+				return this.escape(values[key]);
+			}
+			return txt;
+		}.bind(this));
+	}
 });
-
-db.config.queryFormat = function (query, values) {
-  if (!values) return query;
-  return query.replace(/\:(\w+)/g, function (txt, key) {
-    if (values.hasOwnProperty(key)) {
-      return this.escape(values[key]);
-    }
-    return txt;
-  }.bind(this));
-};
 
 module.exports = db;

@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var session = require('express-session');
+var conf = require('config');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -15,6 +16,9 @@ var auth = require('./routes/auth');
 var medias = require('./routes/medias');
 
 var app = express();
+console.log(app.get('env'));
+console.log(conf);
+app.set('conf', conf);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
