@@ -116,16 +116,17 @@ router.post('/media/appendFile', function(req, res, next) {
 	logger.system.debug(req.files);
 
 	// コンテンツファイル読み込み(ファイルはbufferのまま扱う)
-	fs.readFile(file.path, null, function (err, data) {
-		if (!err) {
-			logger.system.debug('content size:' + data.length);
+//	fs.readFile(file.path, null, function (err, data) {
+//		if (!err) {
+			logger.system.debug('content size:' + file.buffer.length);
 
 			var end = false;
 			var counter = 0;
 			var body = '';
 			var container = params.container;
 			var blob = params.filename + '.' + params.extension;
-			var content = data;
+//			var content = data;
+			var content = file.buffer;
 			var blockSize = 4194304;
 			var blockIdCount = Math.ceil(content.length / blockSize);
 			var createdBlockIds = [];
@@ -164,14 +165,14 @@ router.post('/media/appendFile', function(req, res, next) {
 
 				counter++;
 			}
-		} else {
-			res.setHeader('Content-Type', 'application/json');
-			res.json({
-				isSuccess: isSuccess,
-				messages: messages
-			});
-		}
-	});
+//		} else {
+//			res.setHeader('Content-Type', 'application/json');
+//			res.json({
+//				isSuccess: isSuccess,
+//				messages: messages
+//			});
+//		}
+//	});
 });
 
 router.post('/media/commitFile', function(req, res, next) {
