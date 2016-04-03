@@ -31,7 +31,7 @@ function generateBlockId(blockCount)
 
 router.get('/medias', function(req, res, next) {
 	var model = new mediaModel;
-	model.getListByEventId(req.session.user.id, function(err, rows, fields)
+	model.getListByEventId(req.auth.getId(), function(err, rows, fields)
 	{
 		logger.system.info('rows count:' + rows.length);
 		res.render('media/index', {medias: rows});

@@ -15,7 +15,7 @@ router.post('/login', function(req, res, next) {
 		model.getLoginUser(req.body.user_id, req.body.password, function(err, rows, fields)
 		{
 			if (rows.length > 0) {
-				req.session.user = rows[0];
+				req.auth.login(rows[0]);
 				res.redirect('/');
 			} else {
 				message = 'IDとパスワードが間違っています';
@@ -29,7 +29,7 @@ router.post('/login', function(req, res, next) {
 });
 
 router.get('/logout', function(req, res, next) {
-	req.session.user = null;
+	req.auth.logout();
 	res.redirect('/');
 });
 

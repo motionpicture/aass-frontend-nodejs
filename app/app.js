@@ -2,23 +2,19 @@ var express = require('express');
 var path = require('path');
 var fs = require('fs');
 var favicon = require('serve-favicon');
-//var logger = require('morgan');
 var logger = require('./modules/logger');
+var auth = require('./modules/auth');
+var session = require('./modules/session');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer');
-var session = require('express-session');
 var conf = require('config');
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
-var auth = require('./routes/auth');
-var medias = require('./routes/medias');
+var authRoutes = require('./routes/auth');
+var mediasRoutes = require('./routes/medias');
 
 var app = express();
-console.log(app.get('env'));
-console.log(conf);
-app.set('conf', conf);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,7 +22,7 @@ app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-//app.use(logger('dev'));
+
 app.use(logger.express);
 
 app.use(bodyParser.json());
@@ -35,65 +31,32 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // for parsing multipart/form-data
 var storage = multer.memoryStorage()
 app.use(multer({ storage: storage }).any());
-//app.use(multer({dest: __dirname + '/uploads/'}).any());
 
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-  secret: 'aass secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 30 * 60 * 1000
-  }
-}));
+app.use(session);
+app.use(auth);
 
-var sessionCheck = function(req, res, next) {
-  if (req.session.user) {
-	  logger.system.debug('login.');
-    next();
-  } else {
-	  logger.system.debug('not login.');
-    res.redirect('/login');
-  }
-};
-
-app.use('/', auth);
-app.use('/', sessionCheck, routes);
-app.use('/users', users);
-app.use('/', medias);
+// ルーティングセット
+app.use('/', authRoutes);
+app.use('/', routes);
+app.use('/', mediasRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+	var err = new Error('Not Found');
+	err.status = 404;
+	next(err);
 });
 
 // error handlers
-
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
-    });
-  });
-}
-
-// production error handler
-// no stacktraces leaked to user
 app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
+	res.status(err.status || 500);
+	res.render('error', {
+		message: err.message,
+		error: err
+	});
 });
-
 
 module.exports = app;
