@@ -5,21 +5,21 @@ log4js.configure({
 		{
 			"category": "access",
 			"type": "dateFile",
-			"filename": __dirname + "/../logs/access.log",
+			"filename": __dirname + "/../../logs/access.log",
 			"pattern": "-yyyy-MM-dd",
 			"backups": 3
 		},
 		{
 			"category": "system",
 			"type": "dateFile",
-			"filename": __dirname + "/../logs/system.log",
+			"filename": __dirname + "/../../logs/system.log",
 			"pattern": "-yyyy-MM-dd",
 			"backups": 3
 		},
 		{
 			"category": "error",
 			"type": "dateFile",
-			"filename": __dirname + "/../logs/error.log",
+			"filename": __dirname + "/../../logs/error.log",
 			"pattern": "-yyyy-MM-dd",
 			"backups": 3
 		},
