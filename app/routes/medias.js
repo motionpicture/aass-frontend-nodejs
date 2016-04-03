@@ -47,7 +47,7 @@ router.post('/media/create', function(req, res, next) {
 	var messages = [];
 	var params = req.body;
 	params.id = '';
-	params.event_id = req.session.user.id;
+	params.event_id = req.auth.getUserId();
 
 	var model = new mediaModel;
 	model.insert(params, function(err, result) {
@@ -71,7 +71,7 @@ router.post('/media/createAsset', function(req, res, next) {
 	var params = {};
 
 	var uniqid = require('uniqid');
-	var filename = req.session.user.user_id + uniqid();
+	var filename = req.auth.getUserId() + uniqid();
 	console.log(filename);
 
 	// アセット作成	
