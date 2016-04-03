@@ -38,7 +38,7 @@ mediaService.setToken(function (err)
 				console.log(params);
 
 				// コンテンツファイル読み込み(ファイルはbufferのまま扱う)
-				fs.readFile(__dirname + '/../logs/test_5mb.mp4', null, function (err, data) {
+				fs.readFile(__dirname + '/logs/test_5mb.mp4', null, function (err, data) {
 					if (err) {
 						return console.log(err);
 					}

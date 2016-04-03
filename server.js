@@ -1,1 +1,1 @@
-require('./app/bin/www');
+require('./bin/www');

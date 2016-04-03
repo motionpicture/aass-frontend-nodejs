@@ -1,0 +1,12 @@
+{
+    "db_host": "",
+    "db_username": "",
+    "db_password": "",
+    "db_dbname": "",
+
+    "storage_account_name": "",
+    "storage_account_key": "",
+
+    "media_service_account_name": "",
+    "media_service_account_key": ""
+}

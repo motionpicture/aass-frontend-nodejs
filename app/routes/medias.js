@@ -47,7 +47,7 @@ router.post('/media/create', function(req, res, next) {
 	var messages = [];
 	var params = req.body;
 	params.id = '';
-	params.event_id = req.auth.getUserId();
+	params.event_id = req.auth.getId();
 
 	var model = new mediaModel;
 	model.insert(params, function(err, result) {
