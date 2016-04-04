@@ -1,24 +1,20 @@
 var express = require('express');
 var logger = require('../modules/logger');
 var mediaModel = require('../models/media');
+var blobService = require('../modules/blobService');
 var mediaService = require('../modules/mediaService');
-var amsSdk = require('node-ams-sdk')
-var azure = require('azure');
-/* http://azure.github.io/azure-storage-node/index.html */
 var path = require('path');
 var fs = require('fs')
 
 var router = express.Router();
 
+
+var amsSdk = require('node-ams-sdk')
 var mediaService = new amsSdk({
-	client_id: 'testaassmediasvc',
-	client_secret: 'yG89PW/iK/ftU37SgliqOwvM2/I0DY6xzp7PzEmvS24='
+    client_id: 'testaassmediasvc',
+    client_secret: 'yG89PW/iK/ftU37SgliqOwvM2/I0DY6xzp7PzEmvS24='
 });
 
-var blobService = azure.createBlobService(
-	'mediasvcdtgv96fwgm0zz',
-	"y+Vxc5Lzb4M8zISt6MxPwQ27A4Akvd438MxLhRx/S/U/ISFu+8X1jidBWY/HvX+RgZcKUdMDY/VTR3bSnkhHlw=="
-);
 
 function generateBlockId(blockCount)
 {
@@ -39,6 +35,67 @@ router.get('/medias', function(req, res, next) {
 });
 
 router.get('/media/new', function(req, res, next) {
+	// ファイル受信イベント
+	var server = req.socket.server;
+	var io = require('socket.io')(server);
+	io.on('connection', function(socket){
+		console.log(socket.id);
+		socket.on('createBlobBlock', function (data) {
+			console.log(data);
+
+			var isSuccess = false;
+			var messages = [];
+			logger.system.debug('content size:' + data.file.length);
+
+			var end = false;
+			var counter = 0;
+			var body = '';
+			var container = data.container;
+			var blob = data.filename + '.' + data.extension;
+			var content = data.file;
+			var blockSize = 4194304;
+			var blockIdCount = Math.ceil(content.length / blockSize);
+			var createdBlockIds = [];
+
+			while (!end) {
+				var readPos = blockSize * counter;
+				var endPos = readPos + blockSize;
+				if (endPos >= content.length) {
+					endPos = content.length;
+					end = true;
+					logger.system.debug('end:' + end);
+				}
+
+				body = content.slice(readPos, endPos);
+				logger.system.debug('body size:' + body.length);
+
+				blockId = generateBlockId(parseInt(data.index) + counter);
+				logger.system.debug('blockId:' + blockId);
+
+				// ブロブブロック作成
+				logger.system.debug('creating block...');
+				blobService.createBlockFromText(blockId, container, blob, body, {}, function(error)
+				{
+					logger.system.info('createBlockFromText result... blockId:' + blockId);
+					if (error) throw error;
+					logger.system.info(error);
+					createdBlockIds.push(blockId);
+
+					if (createdBlockIds.length == blockIdCount) {
+						isSuccess = true;
+
+						io.to(socket.id).emit('appendFile', {
+							isSuccess: isSuccess,
+							blockIndex: data.blockIndex
+						});
+					}
+				});
+
+				counter++;
+			}
+		});
+	});
+
 	res.render('media/edit');
 });
 
@@ -72,29 +129,31 @@ router.post('/media/createAsset', function(req, res, next) {
 
 	var uniqid = require('uniqid');
 	var filename = req.auth.getUserId() + uniqid();
-	console.log(filename);
 
 	// アセット作成	
 	mediaService.setToken(function (err) {
-		console.log(err);
+		if (err) throw err;
+
+		logger.system.debug('creating asset... name:' + filename);
 		mediaService.createAsset({
 			Name: filename
 		}, function (error, response) {
-			if (!error) {
-				var data = JSON.parse(response.body);
-				if (!data.error) {
-					var asset = data.d;
-					params = {
-						assetId: asset.Id,
-						container: path.basename(asset.Uri),
-						filename: filename
-					};
+			if (error) throw error;
+			logger.system.debug('createAsset result...');
 
-					isSuccess = true;
-					logger.system.debug(params);
-				} else {
-					messages.push(data.error.message.value);
-				}
+			var data = JSON.parse(response.body);
+			if (!data.error) {
+				var asset = data.d;
+				params = {
+					assetId: asset.Id,
+					container: path.basename(asset.Uri),
+					filename: filename
+				};
+
+				isSuccess = true;
+				logger.system.debug(params);
+			} else {
+				messages.push(data.error.message.value);
 			}
 
 			res.setHeader('Content-Type', 'application/json');
@@ -113,66 +172,54 @@ router.post('/media/appendFile', function(req, res, next) {
 	var params = req.body;
 	var file = req.files[0];
 	logger.system.debug(params);
-	logger.system.debug(req.files);
+	logger.system.debug(file);
+	logger.system.debug('content size:' + file.buffer.length);
 
-	// コンテンツファイル読み込み(ファイルはbufferのまま扱う)
-//	fs.readFile(file.path, null, function (err, data) {
-//		if (!err) {
-			logger.system.debug('content size:' + file.buffer.length);
+	var end = false;
+	var counter = 0;
+	var body = '';
+	var container = params.container;
+	var blob = params.filename + '.' + params.extension;
+	var content = file.buffer;
+	var blockSize = 4194304;
+	var blockIdCount = Math.ceil(content.length / blockSize);
+	var createdBlockIds = [];
 
-			var end = false;
-			var counter = 0;
-			var body = '';
-			var container = params.container;
-			var blob = params.filename + '.' + params.extension;
-//			var content = data;
-			var content = file.buffer;
-			var blockSize = 4194304;
-			var blockIdCount = Math.ceil(content.length / blockSize);
-			var createdBlockIds = [];
+	while (!end) {
+		var readPos = blockSize * counter;
+		var endPos = readPos + blockSize;
+		if (endPos >= content.length) {
+			endPos = content.length;
+			end = true;
+		}
 
-			while (!end) {
-				var readPos = blockSize * counter;
-				var endPos = readPos + blockSize;
-				if (endPos >= content.length) {
-					endPos = content.length;
-					end = true;
-				}
+		body = content.slice(readPos, endPos);
+		logger.system.debug('body size:' + body.length);
 
-				body = content.slice(readPos, endPos);
-				logger.system.debug('body size:' + body.length);
+		blockId = generateBlockId(parseInt(params.index) + counter);
+		logger.system.debug('blockId:' + blockId);
 
-				blockId = generateBlockId(parseInt(params.index) + counter);
-				logger.system.debug('blockId:' + blockId);
+		// ブロブブロック作成
+		blobService.createBlockFromText(blockId, container, blob, body, {}, function(error)
+		{
+			if (error) throw error;
+			logger.system.info('createBlockFromText result... blockId:' + blockId);
+			logger.system.info(error);
+			createdBlockIds.push(blockId);
 
-				// ブロブブロック作成
-				blobService.createBlockFromText(blockId, container, blob, body, {}, function(error)
-				{
-					logger.system.info('createBlockFromText result...');
-					logger.system.info(error);
-					createdBlockIds.push(blockId);
+			if (createdBlockIds.length == blockIdCount) {
+				isSuccess = true;
 
-					if (createdBlockIds.length == blockIdCount) {
-						isSuccess = true;
-
-						res.setHeader('Content-Type', 'application/json');
-						res.json({
-							isSuccess: isSuccess,
-							messages: messages
-						});
-					}
+				res.setHeader('Content-Type', 'application/json');
+				res.json({
+					isSuccess: isSuccess,
+					messages: messages
 				});
-
-				counter++;
 			}
-//		} else {
-//			res.setHeader('Content-Type', 'application/json');
-//			res.json({
-//				isSuccess: isSuccess,
-//				messages: messages
-//			});
-//		}
-//	});
+		});
+
+		counter++;
+	}
 });
 
 router.post('/media/commitFile', function(req, res, next) {
