@@ -8,5 +8,12 @@
     "storage_account_key": "y+Vxc5Lzb4M8zISt6MxPwQ27A4Akvd438MxLhRx/S/U/ISFu+8X1jidBWY/HvX+RgZcKUdMDY/VTR3bSnkhHlw==",
 
     "media_service_account_name": "testaassmediasvc",
-    "media_service_account_key": "yG89PW/iK/ftU37SgliqOwvM2/I0DY6xzp7PzEmvS24="
+    "media_service_account_key": "yG89PW/iK/ftU37SgliqOwvM2/I0DY6xzp7PzEmvS24=",
+
+    "redis_host": "testaassredis.redis.cache.windows.net",
+    "redis_port": "6379",
+    "redis_key": "UavbYEE+mClF3BHdhrvVtEcKxMcbkzacsuzTqBQVFI4=",
+
+    "sendgrid_username": "",
+    "sendgrid_passwords": ""
 }

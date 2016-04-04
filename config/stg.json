@@ -8,5 +8,12 @@
     "storage_account_key": "",
 
     "media_service_account_name": "",
-    "media_service_account_key": ""
+    "media_service_account_key": "",
+
+    "redis_host": "",
+    "redis_port": "",
+    "redis_key": "",
+
+    "sendgrid_username": "",
+    "sendgrid_passwords": ""
 }
