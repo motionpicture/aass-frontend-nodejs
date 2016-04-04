@@ -1,3 +1,5 @@
+var logger = require('./logger');
+
 module.exports = function (req, res, next) {
 	req.auth = new Auth(req);
 
@@ -8,10 +10,13 @@ module.exports = function (req, res, next) {
 		return;
 	}
 
+	logger.system.debug('checking isAuthenticated...');
+	logger.system.debug(req.session);
 	if (req.auth.isAuthenticated()) {
-		console.log(req.session);
+		logger.system.debug('authenticated!');
 		next();
 	} else {
+		logger.system.debug('need to login...');
 		res.redirect('/login');
 	}
 };
