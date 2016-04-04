@@ -38,15 +38,8 @@ router.get('/media/new', function(req, res, next) {
 	// ファイル受信イベント
 	var server = req.socket.server;
 	var io = require('socket.io')(server);
-	io.on('connection', function(socket){
-		console.log(socket.id);
+	io.on('connection', function (socket) {
 		socket.on('createBlobBlock', function (data) {
-			console.log(data);
-
-			var isSuccess = false;
-			var messages = [];
-			logger.system.debug('content size:' + data.file.length);
-
 			var end = false;
 			var counter = 0;
 			var body = '';
@@ -55,7 +48,20 @@ router.get('/media/new', function(req, res, next) {
 			var content = data.file;
 			var blockSize = 4194304;
 			var blockIdCount = Math.ceil(content.length / blockSize);
-			var createdBlockIds = [];
+			var createdBlockIdCount = 0;
+
+			var onCreateBlock = function(error) {
+				if (error) throw error;
+				logger.system.info('createBlockFromText success.');
+				createdBlockIdCount++;
+
+				if (createdBlockIdCount == blockIdCount) {
+					io.to(socket.id).emit('appendFile', {
+						isSuccess: true,
+						blockIndex: data.blockIndex
+					});
+				}
+			};
 
 			while (!end) {
 				var readPos = blockSize * counter;
@@ -63,33 +69,13 @@ router.get('/media/new', function(req, res, next) {
 				if (endPos >= content.length) {
 					endPos = content.length;
 					end = true;
-					logger.system.debug('end:' + end);
 				}
 
-				body = content.slice(readPos, endPos);
-				logger.system.debug('body size:' + body.length);
-
-				blockId = generateBlockId(parseInt(data.index) + counter);
-				logger.system.debug('blockId:' + blockId);
-
 				// ブロブブロック作成
-				logger.system.debug('creating block...');
-				blobService.createBlockFromText(blockId, container, blob, body, {}, function(error)
-				{
-					logger.system.info('createBlockFromText result... blockId:' + blockId);
-					if (error) throw error;
-					logger.system.info(error);
-					createdBlockIds.push(blockId);
-
-					if (createdBlockIds.length == blockIdCount) {
-						isSuccess = true;
-
-						io.to(socket.id).emit('appendFile', {
-							isSuccess: isSuccess,
-							blockIndex: data.blockIndex
-						});
-					}
-				});
+				body = content.slice(readPos, endPos);
+				blockId = generateBlockId(parseInt(data.index) + counter);
+				logger.system.debug('creating block...blockId:' + blockId + ' body size:' + body.length);
+				blobService.createBlockFromText(blockId, container, blob, body, {}, onCreateBlock);
 
 				counter++;
 			}

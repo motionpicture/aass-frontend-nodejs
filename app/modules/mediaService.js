@@ -1,8 +1,6 @@
 var ams = require('node-ams-sdk')
 var conf = require('config');
 
-console.log(conf.media_service_account_name);
-console.log(conf.media_service_account_key);
 var mediaService = new ams({
 	client_id: conf.media_service_account_name,
 	client_secrect: conf.media_service_account_key

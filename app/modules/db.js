@@ -1,7 +1,6 @@
 var mysql = require('mysql');
 var conf = require('config');
 
-console.log('creating pool...');
 var db = mysql.createPool({
 	connectionLimit: 10,
 	host           : conf.db_host,
