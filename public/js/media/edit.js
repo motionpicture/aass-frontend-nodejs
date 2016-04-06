@@ -1,5 +1,3 @@
-var socket = io();
-
 function MediaForm() {
 	this.isNew = false;
 	this.file = null;
@@ -54,39 +52,6 @@ MediaForm.prototype.initialize = function() {
 	$('#progressModal').on('hidden.bs.modal', function (e) {
 		self.cancelUpload(self);
 	});
-
-	// ファイルパーツ追加完了イベント
-	socket.on('appendFile', function (result) {
-		console.log('appendFile result...', result);
-		var blockIndex = result.blockIndex;
-
-		// エラーメッセー時表示
-		if (!result.isSuccess) {
-			// リトライ
-			self.blobBlockUncreatedIndexes.push(blockIndex);
-			self.blobBlockCreatingIndexes.splice(self.blobBlockCreatingIndexes.indexOf(blockIndex), 1);
-		} else {
-			// 結果保存
-			console.log('created. index:' + blockIndex);
-			self.blobBlockCreatedIndexes.push(blockIndex);
-			self.blobBlockCreatingIndexes.splice(self.blobBlockCreatingIndexes.indexOf(blockIndex), 1);
-
-			var blobBlockCreatedCount = self.blobBlockCreatedIndexes.length;
-			console.log('blobBlockCreatedCount:' + blobBlockCreatedCount);
-
-			var rate = Math.floor(blobBlockCreatedCount * 100 / self.division);
-			self.showProgress(rate + '% (' + blobBlockCreatedCount + '/' + self.division + ') をアップロードしました...');
-
-			// ブロブブロックを全て作成したらコミット
-			if (blobBlockCreatedCount == self.division) {
-				clearInterval(self.createBlobBlockTimer);
-				self.createBlobBlockTimer = null;
-
-				// コミット
-				self.commitFile();
-			}
-		}
-	});
 };
 
 MediaForm.prototype.cancelUpload = function(context) {
@@ -125,16 +90,77 @@ MediaForm.prototype.loadFile = function(context, blockIndex) {
 		return false;
 	}
 
-	// socket通信
-	var data = {
-		blockIndex: blockIndex,
-		index: blockIndex * Math.floor(self.chunkSize / self.blobBlockMaxSize),
-		file: blob,
-		extension: self.extension,
-		container: self.container,
-		filename: self.filename
-	};
-	socket.emit('createBlobBlock', data);
+	self.createBlobBlock(blob, blockIndex);
+};
+
+MediaForm.prototype.createBlobBlock = function(fileData, blockIndex) {
+    var self = this;
+
+    var formData = new FormData();
+    formData.append('file', fileData);
+    formData.append('extension', self.extension);
+    formData.append('container', self.container);
+    formData.append('filename', self.filename);
+
+    var startIndex = blockIndex * Math.floor(self.chunkSize / self.blobBlockMaxSize);
+    formData.append('index', startIndex);
+
+    var ajax = $.ajax({
+        url: '/media/appendFile',
+        method: 'post',
+//        timeout: 25000,
+        dataType: 'json',
+        data: formData,
+        processData: false, // Ajaxがdataを整形しない指定
+        contentType: false // contentTypeもfalseに指定
+    })
+    .done(function(data) {
+        // エラーメッセー時表示
+        if (!data.isSuccess) {
+            // リトライ
+            self.blobBlockUncreatedIndexes.push(blockIndex);
+            self.blobBlockCreatingIndexes.splice(self.blobBlockCreatingIndexes.indexOf(blockIndex), 1);
+        } else {
+            // 結果保存
+            console.log('created. index:' + blockIndex);
+
+            self.blobBlockCreatedIndexes.push(blockIndex);
+            self.blobBlockCreatingIndexes.splice(self.blobBlockCreatingIndexes.indexOf(blockIndex), 1);
+
+            var blobBlockCreatedCount = self.blobBlockCreatedIndexes.length;
+            console.log('blobBlockCreatedCount:' + blobBlockCreatedCount);
+
+            var rate = Math.floor(blobBlockCreatedCount * 100 / self.division);
+            self.showProgress(rate + '% (' + blobBlockCreatedCount + '/' + self.division + ') をアップロードしました...');
+            // ブロブブロックを全て作成したらコミット
+            if (blobBlockCreatedCount == self.division) {
+                clearInterval(self.createBlobBlockTimer);
+                self.createBlobBlockTimer = null;
+                // コミット
+                self.commitFile();
+            }
+        }
+    })
+    .fail(function() {
+        // リトライ
+        self.blobBlockUncreatedIndexes.push(blockIndex);
+        self.blobBlockCreatingIndexes.splice(self.blobBlockCreatingIndexes.indexOf(blockIndex), 1);
+        // 3度までリトライ?
+//      if (tryCount < 3) {
+//          self.loadFile(self, blockIndex, tryCount + 1);
+//      } else {
+//          // タイマークリア
+//          clearInterval(self.createBlobBlockTimer);
+//          self.createBlobBlockTimer = null;
+//          alert('ブロブブロックを作成できませんでした blockIndex:' + blockIndex);
+//      }
+  })
+  .always(function() {
+      // ajaxリストから削除
+//      delete self.blobBlockCreatingAjaxes[blockIndex];
+  });
+    // ajaxリストに追加
+//    self.blobBlockCreatingAjaxes[blockIndex] = ajax;
 };
 
 MediaForm.prototype.commitFile = function() {

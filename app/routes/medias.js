@@ -1,13 +1,14 @@
+"use strict";
+
 var express = require('express');
-var logger = require('../modules/logger');
+var logger = require('../modules/Logger');
 var mediaModel = require('../models/media');
 var blobService = require('../modules/blobService');
-var mediaService = require('../modules/mediaService');
+// import mediaService from '../modules/mediaService';
 var path = require('path');
 var fs = require('fs')
 
 var router = express.Router();
-
 
 var amsSdk = require('node-ams-sdk')
 var mediaService = new amsSdk({
@@ -26,7 +27,7 @@ function generateBlockId(blockCount)
 }
 
 router.get('/medias', function(req, res, next) {
-	var model = new mediaModel;
+	var model = new mediaModel();
 	model.getListByEventId(req.auth.getId(), function(err, rows, fields)
 	{
 		logger.system.info('rows count:' + rows.length);
@@ -35,53 +36,6 @@ router.get('/medias', function(req, res, next) {
 });
 
 router.get('/media/new', function(req, res, next) {
-	// ファイル受信イベント
-	var server = req.socket.server;
-	var io = require('socket.io')(server);
-	io.on('connection', function (socket) {
-		socket.on('createBlobBlock', function (data) {
-			var end = false;
-			var counter = 0;
-			var body = '';
-			var container = data.container;
-			var blob = data.filename + '.' + data.extension;
-			var content = data.file;
-			var blockSize = 4194304;
-			var blockIdCount = Math.ceil(content.length / blockSize);
-			var createdBlockIdCount = 0;
-
-			var onCreateBlock = function(error) {
-				if (error) throw error;
-				logger.system.info('createBlockFromText success.');
-				createdBlockIdCount++;
-
-				if (createdBlockIdCount == blockIdCount) {
-					io.to(socket.id).emit('appendFile', {
-						isSuccess: true,
-						blockIndex: data.blockIndex
-					});
-				}
-			};
-
-			while (!end) {
-				var readPos = blockSize * counter;
-				var endPos = readPos + blockSize;
-				if (endPos >= content.length) {
-					endPos = content.length;
-					end = true;
-				}
-
-				// ブロブブロック作成
-				body = content.slice(readPos, endPos);
-				blockId = generateBlockId(parseInt(data.index) + counter);
-				logger.system.debug('creating block...blockId:' + blockId + ' body size:' + body.length);
-				blobService.createBlockFromText(blockId, container, blob, body, {}, onCreateBlock);
-
-				counter++;
-			}
-		});
-	});
-
 	res.render('media/edit');
 });
 
@@ -170,6 +124,7 @@ router.post('/media/appendFile', function(req, res, next) {
 	var blockSize = 4194304;
 	var blockIdCount = Math.ceil(content.length / blockSize);
 	var createdBlockIds = [];
+    var blockId;
 
 	while (!end) {
 		var readPos = blockSize * counter;

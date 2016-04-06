@@ -1,47 +1,55 @@
-var logger = require('./logger');
+"use strict";
 
-module.exports = function (req, res, next) {
-	req.auth = new Auth(req);
+var Constants = require('./Constants');
 
-	res.locals.userId = req.auth.getUserId();
+module.exports = function(req, res, next)
+{
+    var auth = new Auth(req);
+    req.auth = auth;
 
-	if (req.originalUrl == '/login') {
-		next();
-		return;
-	}
+    res.locals.userId = auth.getUserId();
 
-	logger.system.debug('checking isAuthenticated...');
-	logger.system.debug(req.session);
-	if (req.auth.isAuthenticated()) {
-		logger.system.debug('authenticated!');
-		next();
-	} else {
-		logger.system.debug('need to login...');
-		res.redirect('/login');
-	}
-};
+    if (req.originalUrl == '/login') {
+        next();
+        return;
+    }
 
-function Auth(req) {
-	this.req = req;
-	this.AUTH_SESSION_NAME = 'AassFrontendAuth';
+    if (auth.isAuthenticated()) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
 }
 
-Auth.prototype.isAuthenticated = function () {
-	return (this.req.session[this.AUTH_SESSION_NAME]);
-};
+class Auth
+{
+    constructor(req)
+    {
+        this.req = req;
+    }
 
-Auth.prototype.login = function (params) {
-	this.req.session[this.AUTH_SESSION_NAME] = params;
-};
+    isAuthenticated()
+    {
+        return (this.req.session[Constants.AUTH_SESSION_NAME]);
+    }
 
-Auth.prototype.logout = function () {
-	delete this.req.session[this.AUTH_SESSION_NAME];
-};
+    login(params)
+    {
+        this.req.session[Constants.AUTH_SESSION_NAME] = params;
+    }
 
-Auth.prototype.getId = function () {
-	return (this.req.session.hasOwnProperty(this.AUTH_SESSION_NAME)) ? this.req.session[this.AUTH_SESSION_NAME].id : null;
-};
+    logout()
+    {
+        delete this.req.session[Constants.AUTH_SESSION_NAME];
+    }
 
-Auth.prototype.getUserId = function () {
-	return (this.req.session.hasOwnProperty(this.AUTH_SESSION_NAME)) ? this.req.session[this.AUTH_SESSION_NAME].user_id : null;
-};
+    getId()
+    {
+        return (this.req.session.hasOwnProperty(Constants.AUTH_SESSION_NAME)) ? this.req.session[Constants.AUTH_SESSION_NAME].id : null;
+    }
+
+    getUserId()
+    {
+        return (this.req.session.hasOwnProperty(Constants.AUTH_SESSION_NAME)) ? this.req.session[Constants.AUTH_SESSION_NAME].user_id : null;
+    }
+}

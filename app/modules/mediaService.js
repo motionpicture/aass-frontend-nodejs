@@ -1,9 +1,9 @@
 var ams = require('node-ams-sdk')
-var conf = require('config');
+import conf = require('config');
 
 var mediaService = new ams({
-	client_id: conf.media_service_account_name,
-	client_secrect: conf.media_service_account_key
+    client_id: conf.get('media_service_account_name'),
+    client_secrect: conf.get('media_service_account_key')
 });
 
 //var mediaService = new amsSdk({
@@ -16,4 +16,4 @@ var mediaService = new ams({
     //do other stuff. no response returned.
 //});
 
-module.exports = mediaService;
+export default mediaService;

@@ -1,5 +1,8 @@
+"use strict";
+
 var express = require('express');
 var logger = require('../modules/logger');
+
 var router = express.Router();
 
 /* GET home page. */

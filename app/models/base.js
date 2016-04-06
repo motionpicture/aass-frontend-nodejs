@@ -1,9 +1,15 @@
-var db = require('../modules/db');
-var logger = require('../modules/logger');
+"use strict";
 
-module.exports = model;
-function model() {
+var db = require('../modules/DB');
+var logger = require('../modules/Logger');
+
+class Base
+{
+    constructor()
+    {
+        this.db = db;
+        this.logger = logger;
+    }
 }
 
-model.prototype.db = db;
-model.prototype.logger = logger;
+module.exports = Base;
