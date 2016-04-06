@@ -1,8 +1,8 @@
 "use strict";
 
-var Base = require('./Base');
+var BaseModel = require('./BaseModel');
 
-class Event extends Base
+class EventModel extends BaseModel
 {
     getLoginUser(userId, password, callback)
     {
@@ -17,4 +17,4 @@ class Event extends Base
     }
 }
 
-module.exports = Event;
+module.exports = EventModel;

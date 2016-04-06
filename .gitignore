@@ -3,7 +3,6 @@
 
 logs/*
 node_modules/*
-mode.php
 
 !.gitignore
 !.gitkeep

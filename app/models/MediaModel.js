@@ -1,9 +1,9 @@
 "use strict";
 
-var Base = require('./Base');
+var BaseModel = require('./BaseModel');
 var Constants = require('../modules/Constants');
 
-class Media extends Base
+class MediaModel extends BaseModel
 {
     getListByEventId(eventId, callback)
     {
@@ -14,7 +14,7 @@ class Media extends Base
         };
 
         this.db.query(query, queryParams, callback);
-    };
+    }
 
     insert(params, callback)
     {
@@ -35,7 +35,18 @@ class Media extends Base
         };
 
         this.db.query(query, queryParams, callback);
-    };
+    }
+
+    deleteById(id, callback)
+    {
+        var query = 'UPDATE media SET status = :status, updated_at = NOW() WHERE id = :id';
+        var queryParams = {
+            id: id,
+            status: Constants.MEDIA_STATUS_DELETED
+        };
+
+        this.db.query(query, queryParams, callback);
+    }
 }
 
-module.exports = Media;
+module.exports = MediaModel;

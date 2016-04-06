@@ -3,7 +3,7 @@
 var db = require('../modules/DB');
 var logger = require('../modules/Logger');
 
-class Base
+class BaseModel
 {
     constructor()
     {
@@ -12,4 +12,4 @@ class Base
     }
 }
 
-module.exports = Base;
+module.exports = BaseModel;
