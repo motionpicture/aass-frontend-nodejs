@@ -2,7 +2,6 @@ $(function(){
     $('.delete_media').on('click', function(e){
         var rootRow = $(this).parent().parent();
         var id = $('input[name="id"]', rootRow).val();
-        var applicationId = $('input[name="application_id"]', rootRow).val();
 
         $.ajax({
             type: 'post',
@@ -16,10 +15,6 @@ $(function(){
                 alert('delete fail!');
             } else {
                 rootRow.remove();
-                if (applicationId) {
-                    $('.no_apply_media').hide();
-                    $('.apply_media').show();
-                }
                 alert('delete success!');
             }
         })
